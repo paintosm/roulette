@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>점심 메뉴 룰렛</title>
+  <!-- GSAP CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <style>
+    html, body { overflow: hidden; }
+body { font-family: sans-serif; margin:0; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(circle at center,#fff,#f0f0f0);}    
+    /* 메뉴 추가창 위치 */
+    #controls { display:flex; gap:8px; margin-bottom:20px; background:#fff; padding:8px 12px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}    
+    #menu-input { padding:8px; border:1px solid #ccc; border-radius:4px; width:200px; }
+    /* 추가 버튼 색상 */
+    #add-menu { padding:8px 12px; background:#3498db; color:#fff; border:none; border-radius:4px; cursor:pointer; transition:background .3s;}    
+    #add-menu:hover { background:#2980b9; }
+    #wheel-container { position:relative; width:500px; height:500px; margin-bottom:20px; }
+    canvas { position:absolute; top:0; left:0; width:100%; height:100%; transform-origin:center center; border-radius:50%; box-shadow:0 8px 20px rgba(0,0,0,0.3); background:#fff; z-index:1; }
+    #wheel-inner { position:absolute; top:50%; left:50%; width:130px; height:130px; background:#fff; border-radius:50%; transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold; color:#333; box-shadow:0 4px 10px rgba(0,0,0,0.2); z-index:2; pointer-events:none; }
+    #pointer { position:absolute; top:20px; left:50%; width:0; height:0; transform:translateX(-50%); border-left:20px solid transparent; border-right:20px solid transparent; border-top:40px solid #e74c3c; z-index:3; transition:transform .2s; }
+    #pointer.bounce { transform:translateX(-50%) rotate(-15deg); }
+    button, input[type=text] { font-size:16px; }
+    button#spin { position:absolute; bottom:-60px; left:50%; transform:translateX(-50%); padding:12px 28px; font-size:18px; background:#3498db; color:#fff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2); transition:background .3s,transform .2s; z-index:5; }
+    button#spin:hover:not([disabled]) { background:#2980b9; }
+    button#spin:active:not([disabled]) { transform:translateX(-50%) scale(.95); }
+    button#spin[disabled] { background:#95a5a6; cursor:not-allowed; }
+    .firework { position:absolute; border-radius:50%; pointer-events:none; z-index:9; will-change: transform, opacity; filter: drop-shadow(0 0 6px rgba(255,255,255,0.6)); }
+    .confetti { position:absolute; width:8px; height:14px; border-radius:2px; will-change: transform, opacity; z-index:9; }
+    .burst-line { position:absolute; width:3px; height:22px; border-radius:2px; background: linear-gradient(180deg, #fff, rgba(255,255,255,0)); box-shadow: 0 0 8px rgba(255,255,255,.6); z-index:9; }
+    .ripple { position:absolute; border:2px solid rgba(255,255,255,.8); border-radius:50%; width:20px; height:20px; opacity:.9; z-index:9; }
+    @keyframes pop { 0% { transform: scale(.85) translateY(10px); opacity:0 } 100% { transform: scale(1) translateY(0); opacity:1 } }
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    /* Modal popup 스타일 */
+    #result-modal { position:fixed; top:0; left:0; width:100%; height:100%; display:none; align-items:center; justify-content:center; z-index:10; background: radial-gradient(ellipse at center, rgba(0,0,0,0.45), rgba(0,0,0,0.7)); backdrop-filter: blur(6px); animation: fadeIn .3s ease; overflow: hidden; }
+    #result-content { position:relative; background: linear-gradient(#ffffff,#ffffff) padding-box, linear-gradient(135deg,#6dd5fa,#f093fb,#f9d423) border-box; border:2px solid transparent; padding:28px 36px; border-radius:16px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.35); overflow:hidden; animation: pop .5s cubic-bezier(.2,.8,.2,1); }
+    #result-content h2 { margin:0 0 6px; font-size:28px; letter-spacing:0.5px; }
+    #close-modal { position:absolute; top:10px; right:10px; background:#00000010; border:1px solid #ffffff40; color:#333; width:36px; height:36px; border-radius:50%; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: transform .2s, background .2s; }
+    #close-modal:hover { background:#00000020; transform: scale(1.06); }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <input type="text" id="menu-input" placeholder="메뉴 추가" />
+    <button id="add-menu">추가</button>
+  </div>
+  <div id="wheel-container">
+    <div id="pointer"></div>
+    <canvas id="wheel" width="500" height="500"></canvas>
+    <div id="wheel-inner">룰렛</div>
+    <button id="spin">돌리기</button>
+  </div>
+  <!-- 결과 팝업 레이어 -->
+  <div id="result-modal">
+    <div id="result-content">
+      <button id="close-modal">✕</button>
+      <h2 id="result-text"></h2>
+    </div>
+  </div>
+  <script>
+    let menus=['한식','중식','일식','양식','분식','치킨','피자','햄버거'], colors=[];
+    const canvas=document.getElementById('wheel'),ctx=canvas.getContext('2d');
+    const cx=canvas.width/2,cy=canvas.height/2,radius=200;
+    let segCount=menus.length,segAngle=360/segCount;
+    let currentRot=0,spinning=false,selIdx=null;
+
+    function updateColors(){ colors=menus.map((_,i)=>`hsl(${i*360/menus.length},70%,70%)`); }
+    function updateSegments(){ segCount=menus.length; segAngle=360/segCount; updateColors(); }
+
+    function drawWheel(rot){ ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();ctx.translate(cx,cy);ctx.rotate(rot*Math.PI/180);
+      for(let i=0;i<segCount;i++){ const a1=i*2*Math.PI/segCount,a2=a1+2*Math.PI/segCount;ctx.beginPath();ctx.moveTo(0,0);
+        ctx.arc(0,0,radius,a1,a2);ctx.closePath();ctx.fillStyle=colors[i];ctx.fill();const mid=(a1+a2)/2;
+        ctx.save();ctx.translate(Math.cos(mid)*(radius-60),Math.sin(mid)*(radius-60));ctx.rotate(mid+Math.PI/2);
+        ctx.fillStyle='#333';ctx.font='18px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(menus[i],0,0);ctx.restore(); }
+      if(selIdx!==null){ const sA=selIdx*2*Math.PI/segCount,eA=sA+2*Math.PI/segCount;ctx.beginPath();ctx.moveTo(0,0);
+        ctx.arc(0,0,radius+8,sA,eA);ctx.closePath();ctx.lineWidth=6;ctx.strokeStyle='#e74c3c';ctx.shadowColor='rgba(231,76,60,0.7)';ctx.shadowBlur=15;ctx.stroke(); }
+      ctx.restore(); }
+
+    function showFireworks(){
+      const palette=['#ff6b6b','#ffd93d','#6bcBef','#9b59b6','#1abc9c','#ff8a00','#e84393'];
+      const container=document.getElementById('wheel-container');
+      const centerX=cx, centerY=cy;
+
+      // 1) Expanding ripples
+      for(let r=0;r<2;r++){
+        const ring=document.createElement('div');
+        ring.className='ripple';
+        ring.style.left=`${centerX-10}px`;
+        ring.style.top =`${centerY-10}px`;
+        container.appendChild(ring);
+        gsap.to(ring,{ width: 420, height: 420, x:-200, y:-200, opacity:0, duration:1.4, ease:'power1.out', onComplete:()=> ring.remove() });
+      }
+
+      // 2) Radial burst lines
+      const rays=24; const radius=260;
+      for(let i=0;i<rays;i++){
+        const line=document.createElement('div');
+        line.className='burst-line';
+        line.style.left=`${centerX}px`;
+        line.style.top =`${centerY}px`;
+        container.appendChild(line);
+        const ang=i*(360/rays); const rad=ang*Math.PI/180;
+        gsap.to(line,{ x: Math.cos(rad)*radius, y: Math.sin(rad)*radius, opacity: 0, scale: 1.2, duration: 1.1, ease: 'power2.out', onComplete:()=> line.remove() });
+      }
+
+      // 3) Confetti
+      const confettiCount=90;
+      for(let i=0;i<confettiCount;i++){
+        const c=document.createElement('div'); c.className='confetti';
+        c.style.left=`${centerX}px`; c.style.top =`${centerY}px`;
+        c.style.background=palette[Math.floor(Math.random()*palette.length)];
+        c.style.borderRadius=Math.random()>.5?'50%':'2px';
+        c.style.transform=`rotate(${Math.random()*360}deg)`;
+        container.appendChild(c);
+        gsap.to(c,{ x:(Math.random()-0.5)*640, y:(Math.random()-0.5)*560, rotation: 360*(Math.random()*4+1), opacity:0, duration: 1.8+Math.random()*0.9, ease: 'expo.out', onComplete:()=> c.remove() });
+      }
+
+      // 4) Sparkle orbs
+      const sparkles=24;
+      for(let i=0;i<sparkles;i++){
+        const p=document.createElement('div'); p.className='firework';
+        const size=10+Math.random()*16; p.style.width=`${size}px`; p.style.height=`${size}px`;
+        p.style.left=`${centerX}px`; p.style.top =`${centerY}px`;
+        p.style.background=palette[Math.floor(Math.random()*palette.length)];
+        container.appendChild(p);
+        gsap.to(p,{ x:(Math.random()-0.5)*580, y:(Math.random()-0.5)*580, scale: 0.8 + Math.random()*1.2, opacity: 0, duration: 1.2+Math.random()*0.6, ease: 'power2.out', onComplete:()=> p.remove() });
+      }
+    }
+
+    function initWheel(){ updateSegments();currentRot=0;selIdx=null;drawWheel(0);} initWheel();
+
+    document.getElementById('add-menu').onclick=()=>{ const inp=document.getElementById('menu-input');const val=inp.value.trim();
+      if(!val)return; if(menus.includes(val)){alert('이미 등록된 메뉴입니다.');inp.value='';return;} menus.push(val);inp.value='';initWheel();};
+
+    canvas.addEventListener('click',e=>{ if(spinning)return;const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left,y=e.clientY-rect.top;
+      const dx=x-cx,dy=y-cy;if(Math.hypot(dx,dy)>radius)return;let angle=Math.atan2(dy,dx)*180/Math.PI;angle<0&&(angle+=360);
+      let local=angle-currentRot;local<0&&(local+=360);const idx=Math.floor(local/segAngle);menus.splice(idx,1);initWheel(); });
+
+    const modal=document.getElementById('result-modal'), resultText=document.getElementById('result-text');
+    document.getElementById('close-modal').onclick=()=>{modal.style.display='none';};
+
+    document.getElementById('spin').onclick=()=>{ if(spinning)return;spinning=true;document.getElementById('spin').disabled=true;selIdx=null;
+      document.getElementById('wheel-inner').textContent='';const randRot=5,randAng=Math.random()*360,target=currentRot+360*randRot+randAng;
+      const spinObj={r:currentRot};gsap.to(spinObj,{r:target,duration:5,ease:'power3.out',
+        onUpdate:()=>drawWheel(spinObj.r),onComplete:()=>{ currentRot=(spinObj.r%360+360)%360;
+          const norm=((270-currentRot)%360+360)%360;selIdx=Math.floor(norm/segAngle);drawWheel(currentRot);
+          resultText.textContent=`🎉 추천 메뉴: ${menus[selIdx]} 🎉`;
+          modal.style.display='flex';document.getElementById('pointer').classList.add('bounce');showFireworks();
+          setTimeout(()=>document.getElementById('pointer').classList.remove('bounce'),300);
+          document.getElementById('spin').disabled=false;spinning=false; } }); };
+  </script>
+</body>
+</html>
