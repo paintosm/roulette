@@ -1,10 +1,10 @@
 const CACHE_NAME = 'menu-roulette-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon.png',
-  '/og_image.png',
+  './',
+  './index.html',
+  './manifest.json',
+  './icon.png',
+  './og_image.png',
   'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js'
 ];
 
