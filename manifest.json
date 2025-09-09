@@ -1,0 +1,22 @@
+{
+  "name": "점심 메뉴 룰렛",
+  "short_name": "메뉴 룰렛",
+  "description": "점심 메뉴를 랜덤으로 선택해주는 룰렛 앱",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0f0f0",
+  "theme_color": "#3498db",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "utilities", "lifestyle"],
+  "lang": "ko",
+  "dir": "ltr"
+}

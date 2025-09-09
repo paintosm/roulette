@@ -4,6 +4,35 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>점심 메뉴 룰렛</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3498db">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="메뉴 룰렛">
+  <link rel="apple-touch-icon" href="icon.png">
+  
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="점심 메뉴 룰렛">
+  <meta property="og:description" content="점심 메뉴를 랜덤으로 선택해주는 룰렛 앱">
+  <meta property="og:image" content="og_image.png">
+  <meta property="og:url" content="https://paintosm.github.io/roulette/">
+  <meta property="og:site_name" content="점심 메뉴 룰렛">
+  <meta property="og:locale" content="ko_KR">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="점심 메뉴 룰렛">
+  <meta name="twitter:description" content="점심 메뉴를 랜덤으로 선택해주는 룰렛 앱">
+  <meta name="twitter:image" content="og_image.png">
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="점심 메뉴를 랜덤으로 선택해주는 룰렛 앱. 메뉴를 추가하고 룰렛을 돌려 랜덤으로 점심 메뉴를 선택하세요.">
+  <meta name="keywords" content="룰렛, 점심, 메뉴, 랜덤, 선택, 음식">
+  <meta name="author" content="paintosm">
+  <link rel="icon" href="icon.png" type="image/png">
   <!-- GSAP CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <style>
@@ -147,6 +176,19 @@ body { font-family: sans-serif; margin:0; height:100vh; display:flex; flex-direc
           modal.style.display='flex';document.getElementById('pointer').classList.add('bounce');showFireworks();
           setTimeout(()=>document.getElementById('pointer').classList.remove('bounce'),300);
           document.getElementById('spin').disabled=false;spinning=false; } }); };
+
+    // PWA 서비스 워커 등록
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('SW 등록 성공: ', registration.scope);
+          })
+          .catch(registrationError => {
+            console.log('SW 등록 실패: ', registrationError);
+          });
+      });
+    }
   </script>
 </body>
 </html>
