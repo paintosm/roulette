@@ -73,8 +73,9 @@ body { font-family: sans-serif; margin:0; height:100vh; display:flex; flex-direc
     /* 모바일 반응형 */
     @media (max-width: 600px) {
       #wheel-container { width:90vw; height:90vw; max-width:400px; max-height:400px; }
-      #controls { flex-direction:column; gap:10px; margin-bottom:15px; }
-      #menu-input { width:100%; }
+      #controls { flex-direction:column; gap:10px; margin-bottom:15px; align-items:stretch; }
+      #menu-input { width:100%; box-sizing:border-box; }
+      #add-menu { align-self:stretch; }
     }
   </style>
 </head>
