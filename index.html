@@ -139,10 +139,10 @@ body { font-family: sans-serif; margin:0; height:100vh; display:flex; flex-direc
     document.getElementById('close-modal').onclick=()=>{modal.style.display='none';};
 
     document.getElementById('spin').onclick=()=>{ if(spinning)return;spinning=true;document.getElementById('spin').disabled=true;selIdx=null;
-      document.getElementById('wheel-inner').textContent='';const randRot=5,randAng=Math.random()*360,target=currentRot+360*randRot+randAng;
-      const spinObj={r:currentRot};gsap.to(spinObj,{r:target,duration:5,ease:'power3.out',
+      document.getElementById('wheel-inner').textContent='';const randRot=8+Math.random()*4,randAng=Math.random()*360,target=currentRot+360*randRot+randAng;
+      const spinObj={r:currentRot};gsap.to(spinObj,{r:target,duration:6,ease:'power2.out',
         onUpdate:()=>drawWheel(spinObj.r),onComplete:()=>{ currentRot=(spinObj.r%360+360)%360;
-          const norm=((270-currentRot)%360+360)%360;selIdx=Math.floor(norm/segAngle);drawWheel(currentRot);
+          const pointerAngle=(270-currentRot+360)%360;selIdx=Math.floor(pointerAngle/segAngle)%segCount;drawWheel(currentRot);
           resultText.textContent=`🎉 추천 메뉴: ${menus[selIdx]} 🎉`;
           modal.style.display='flex';document.getElementById('pointer').classList.add('bounce');showFireworks();
           setTimeout(()=>document.getElementById('pointer').classList.remove('bounce'),300);
