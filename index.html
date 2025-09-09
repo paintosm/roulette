@@ -166,14 +166,16 @@ body { font-family: sans-serif; margin:0; height:100vh; display:flex; flex-direc
       }
     }
 
-    function initWheel(){ updateSegments();currentRot=0;selIdx=null;drawWheel(0);} initWheel();
+    function initWheel(randomStart=false){ updateSegments();if(randomStart)currentRot=Math.random()*360;selIdx=null;drawWheel(currentRot);} 
+    initWheel(true);
 
     document.getElementById('add-menu').onclick=()=>{ const inp=document.getElementById('menu-input');const val=inp.value.trim();
       if(!val)return; if(menus.includes(val)){alert('이미 등록된 메뉴입니다.');inp.value='';return;} menus.push(val);inp.value='';initWheel();};
 
     canvas.addEventListener('click',e=>{ if(spinning)return;const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left,y=e.clientY-rect.top;
       const dx=x-cx,dy=y-cy;if(Math.hypot(dx,dy)>radius)return;let angle=Math.atan2(dy,dx)*180/Math.PI;angle<0&&(angle+=360);
-      let local=(angle-currentRot+360)%360;const idx=Math.floor(local*segCount/360);menus.splice(idx,1);initWheel(); });
+      const adjustedAngle=(angle+90+360)%360;const localAngle=(adjustedAngle-currentRot+360)%360;const idx=Math.floor(localAngle/segAngle);
+      if(idx>=0&&idx<menus.length){menus.splice(idx,1);initWheel();} });
 
     const modal=document.getElementById('result-modal'), resultText=document.getElementById('result-text_02');
     document.getElementById('close-modal').onclick=()=>{modal.style.display='none';};
