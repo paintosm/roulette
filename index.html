@@ -173,7 +173,7 @@ body { font-family: sans-serif; margin:0; height:100vh; display:flex; flex-direc
 
     canvas.addEventListener('click',e=>{ if(spinning)return;const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left,y=e.clientY-rect.top;
       const dx=x-cx,dy=y-cy;if(Math.hypot(dx,dy)>radius)return;let angle=Math.atan2(dy,dx)*180/Math.PI;angle<0&&(angle+=360);
-      let local=angle-currentRot;local<0&&(local+=360);const idx=Math.floor(local/segAngle);menus.splice(idx,1);initWheel(); });
+      let local=(angle-currentRot+360)%360;const idx=Math.floor(local*segCount/360);menus.splice(idx,1);initWheel(); });
 
     const modal=document.getElementById('result-modal'), resultText=document.getElementById('result-text_02');
     document.getElementById('close-modal').onclick=()=>{modal.style.display='none';};
