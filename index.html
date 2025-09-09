@@ -9,6 +9,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#3498db">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="메뉴 룰렛">
   <link rel="apple-touch-icon" href="icon.png">
@@ -180,7 +181,13 @@ body { font-family: sans-serif; margin:0; height:100vh; display:flex; flex-direc
     // PWA 서비스 워커 등록
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
+        const swPath = window.location.pathname.endsWith('/') ? 
+          window.location.pathname + 'sw.js' : 
+          window.location.pathname.replace(/\/[^\/]*$/, '/') + 'sw.js';
+        
+        navigator.serviceWorker.register(swPath, { 
+          scope: window.location.pathname.replace(/\/[^\/]*$/, '/') 
+        })
           .then(registration => {
             console.log('SW 등록 성공: ', registration.scope);
           })
